@@ -1,0 +1,12 @@
+#ifndef LIBBBGEO_GLOBAL_H
+#define LIBBBGEO_GLOBAL_H
+
+#include <QtCore/qglobal.h>
+
+#if defined(LIBBBGEO_LIBRARY)
+#  define LIBBBGEOSHARED_EXPORT Q_DECL_EXPORT
+#else
+#  define LIBBBGEOSHARED_EXPORT Q_DECL_IMPORT
+#endif
+
+#endif // LIBBBGEO_GLOBAL_H
