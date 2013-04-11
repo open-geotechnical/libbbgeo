@@ -35,6 +35,9 @@ public:
 
     void addSoilTypeIDs(VSoil *vs);
 
+    void getUniqueVSoilsIDs(QList<int> &vsoilIds);
+    void optimize(); //avoids two or more consecutive areas with the same id
+
 private:
     QList<sArea> *m_areas;
     QList<QPointF> *m_points;

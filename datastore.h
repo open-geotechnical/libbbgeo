@@ -26,6 +26,7 @@ public:
     int getVSoilIdClosestTo(QPointF xy);
 
     void importCPTS(QString path, QStringList &log);
+    bool importVSoilFromTextFile(QString fileName, QStringList &log);
 
     void generateGeoProfile2D(QList<QPointF> &latlonPoints);
 
@@ -46,11 +47,13 @@ public:
     bool exportGeoProfileToKMLfile(const QString fileName, const int geoProfileIndex);
     bool exportGeoProfileToQGeoFile(const QString fileName, const int geoProfileIndex);
     bool exportGeoProfileSoiltypesToCSVFile(const QString fileName, const int geoProfileIndex);
+    bool exportGeoProfileToDAM(const QString path, const int geoProfileIndex);
 
     bool dataLoaded() { return m_dataLoaded; }
 
     int getNextVSoilId();
     bool addNewVSoil(QPointF pointLatLon, QString source);
+    void getVSoilSources(QStringList &sources);
 
 
 public slots:

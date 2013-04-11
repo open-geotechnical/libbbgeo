@@ -131,23 +131,28 @@ void DBAdapter::getAllVSoils(QList<VSoil *> &vsoils)
 
 void DBAdapter::addCPT(CPT *cpt, const int vsoilId, QSqlError &err)
 {
-    cpt->setId(getMaxIDFromCPT() + 1);
-    QByteArray blob = cpt->dataAsQByteArray();
-    QSqlQuery qry;    
-    qry.prepare("INSERT INTO cpt VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    qry.bindValue(0, cpt->id());
-    qry.bindValue(1, cpt->date());
-    qry.bindValue(2, cpt->x());
-    qry.bindValue(3, cpt->y());
-    qry.bindValue(4, cpt->zmax());
-    qry.bindValue(5, cpt->zmin());
-    qry.bindValue(6, cpt->fileName());
-    qry.bindValue(7, vsoilId);
-    qry.bindValue(8, cpt->latitude());
-    qry.bindValue(9, cpt->longitude());
-    qry.bindValue(10, cpt->name());
-    qry.exec();    
-    err = qry.lastError();
+    //first check if the x and y are unique
+    if(isUniqueCPT(QPointF(cpt->x(), cpt->y()))){
+        cpt->setId(getMaxIDFromCPT() + 1);
+        QByteArray blob = cpt->dataAsQByteArray();
+        QSqlQuery qry;
+        qry.prepare("INSERT INTO cpt VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        qry.bindValue(0, cpt->id());
+        qry.bindValue(1, cpt->date());
+        qry.bindValue(2, cpt->x());
+        qry.bindValue(3, cpt->y());
+        qry.bindValue(4, cpt->zmax());
+        qry.bindValue(5, cpt->zmin());
+        qry.bindValue(6, cpt->fileName());
+        qry.bindValue(7, vsoilId);
+        qry.bindValue(8, cpt->latitude());
+        qry.bindValue(9, cpt->longitude());
+        qry.bindValue(10, cpt->name());
+        qry.exec();
+        err = qry.lastError();
+    }else{
+        //TODO: foutmelding dat de xy al bezet is
+    }
 }
 
 /*
@@ -164,22 +169,46 @@ bool DBAdapter::isUniqueCPT(QPointF point)
     return qry.first()==QVariant::Invalid;
 }
 
+bool DBAdapter::isUniqueVSoil(QPointF point)
+{
+    QSqlQuery qry;
+    qry.prepare("SELECT * FROM vsoil WHERE x=? AND y=?");
+    qry.bindValue(0, point.x());
+    qry.bindValue(1, point.y());
+    qry.exec();
+    return qry.first()==QVariant::Invalid;
+}
+
+void DBAdapter::getVSoilSources(QStringList &sources)
+{
+    QSqlQuery qry;
+    qry.prepare("SELECT DISTINCT source FROM vsoil");
+    qry.exec();
+    while (qry.next()) {
+        sources.append(qry.value(0).toString());
+    }
+}
+
 void DBAdapter::addVSoil(VSoil &vsoil, QSqlError &err)
 {
-    vsoil.setId(getMaxIDFromVSoil() + 1);
-    QByteArray blob = vsoil.dataAsQByteArray();
-    QSqlQuery qry;
-    qry.prepare("INSERT INTO vsoil VALUES(?, ?, ?, ?, ?, ?, ?, ?)");
-    qry.bindValue(0, vsoil.id());
-    qry.bindValue(1, vsoil.x());
-    qry.bindValue(2, vsoil.y());
-    qry.bindValue(3, vsoil.latitude());
-    qry.bindValue(4, vsoil.longitude());
-    qry.bindValue(5, vsoil.source());
-    qry.bindValue(6, blob.data());
-    qry.bindValue(7, vsoil.name());
-    qry.exec();
-    err = qry.lastError();
+    if(isUniqueVSoil(QPointF(vsoil.x(), vsoil.y()))){
+        vsoil.setId(getMaxIDFromVSoil() + 1);
+        QByteArray blob = vsoil.dataAsQByteArray();
+        QSqlQuery qry;
+        qry.prepare("INSERT INTO vsoil VALUES(?, ?, ?, ?, ?, ?, ?, ?)");
+        qry.bindValue(0, vsoil.id());
+        qry.bindValue(1, vsoil.x());
+        qry.bindValue(2, vsoil.y());
+        qry.bindValue(3, vsoil.latitude());
+        qry.bindValue(4, vsoil.longitude());
+        qry.bindValue(5, vsoil.source());
+        qry.bindValue(6, blob.data());
+        qry.bindValue(7, vsoil.name());
+        qry.exec();
+        err = qry.lastError();
+    }else{
+        //TODO: foutmelding dat de xy al bezet is
+    }
 }
 
 void DBAdapter::updateVSoil(VSoil *vsoil, QSqlError &err){

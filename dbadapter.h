@@ -30,6 +30,8 @@ public:
     void updateVSoil(VSoil *vsoil, QSqlError &err);
 
     bool isUniqueCPT(QPointF point);
+    bool isUniqueVSoil(QPointF point);
+    void getVSoilSources(QStringList &sources);
 
 private:
     QSqlDatabase m_db;

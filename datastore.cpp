@@ -171,6 +171,73 @@ void DataStore::importCPTS(QString path, QStringList &log)
     m_db->getAllVSoils(m_vsoils);
 }
 
+bool DataStore::importVSoilFromTextFile(QString fileName, QStringList &log)
+{
+    QFile file(fileName);
+    //try to open the file
+    if(!file.open(QIODevice::ReadOnly)) {
+        log.append(QString("Error opening the file %1 for import.").arg(fileName));
+        return false;
+    }
+    //and read the file
+    if(!m_dataLoaded){
+        log.append("Trying to import vsoils from textfile with closed database.");
+        return false;
+    }
+
+    QTextStream in(&file);
+    QString line = file.readLine();
+    while(!in.atEnd()) {
+        if(line.contains('#')){ //header
+            VSoil vs;
+            vs.setSource("Geoprofile");
+            vs.setName(line.remove("#"));
+            //the id is automatically entered at the addVsoil function in the database class
+            line = file.readLine(); //x;y
+            QStringList args = line.split(';');
+            double x = args[0].trimmed().toDouble();
+            double y = args[1].trimmed().toDouble();
+            vs.setX(x);
+            vs.setY(y);
+            LatLon l;
+            l.fromRDCoords(x,y);
+            vs.setLatitude(l.getLatitude());
+            vs.setLongitude(l.getLongitude());
+            line = file.readLine(); //zmax;zmin;id
+            args = line.split(';');
+            vs.addSoilLayer(args[0].trimmed().toDouble(),
+                             args[1].trimmed().toDouble(),
+                             args[2].trimmed().toInt());
+            double prevz = args[1].trimmed().toDouble();
+            //now read the next lines until either #, eof or whiteline
+            while(!in.atEnd()){
+                line = file.readLine();
+                args = line.split(';');
+                if (line.trimmed().length()==0) break;
+                if (line.contains('#')) break;
+                vs.addSoilLayer(prevz,
+                                 args[0].trimmed().toDouble(),
+                                 args[1].trimmed().toInt());
+                prevz = args[0].trimmed().toDouble();
+                if (in.atEnd()) break;
+            }
+            QSqlError err;
+            m_db->addVSoil(vs, err);
+            if(err.isValid()){
+                qDebug() << "DBERROR: %1" << err;
+                log.append(QString("SKIPPED file %1 because of database error %2").arg(fileName).arg(err.text()));
+                return false;
+            }
+        }
+        if(in.atEnd()) break;
+    }
+    file.close();
+    //reload all vsoils
+    m_vsoils.clear();
+    m_db->getAllVSoils(m_vsoils);
+    return true;
+}
+
 void DataStore::generateGeoProfile2D(QList<QPointF> &latlonPoints)
 {
     GeoProfile2D *geo = new GeoProfile2D();
@@ -227,8 +294,10 @@ void DataStore::generateGeoProfile2D(QList<QPointF> &latlonPoints)
                 prevLength = j; //and make sure the prev length equals the current length
                 if(j==dL) { currentLength += j; } //keep the current length for the next line
             }
-        }        
+        }
+
     }
+    geo->optimize();
     m_geoProfile2Ds.append(geo);
 }
 
@@ -360,7 +429,7 @@ bool DataStore::exportGeoProfileSoiltypesToCSVFile(const QString fileName, const
     }
 
     QTextStream out(&file);
-    out << "naam;ydroog;ynat;c;phi\n";
+    out << "naam,ydroog,ynat,c,phi\n";
 
     for (int i=0; i<geo->soilTypeIDs()->count(); i++){
         SoilType *st = getSoilTypeById(geo->soilTypeIDs()->at(i));
@@ -369,7 +438,7 @@ bool DataStore::exportGeoProfileSoiltypesToCSVFile(const QString fileName, const
             qDebug() << "could not find soiltype by id=" << geo->soilTypeIDs()[i];
             return false;
         }
-        QString line = QString("%1;%2;%3;%4;%5\n")
+        QString line = QString("%1,%2,%3,%4,%5\n")
                 .arg(st->name())
                 .arg(st->yDry(), 0, 'f', 1)
                 .arg(st->ySat(), 0, 'f', 1)
@@ -382,6 +451,106 @@ bool DataStore::exportGeoProfileSoiltypesToCSVFile(const QString fileName, const
     return true; //succes!
 }
 
+bool DataStore::exportGeoProfileToDAM(QString path, const int geoProfileIndex)
+{
+    //generate the soilprofiles
+    if(geoProfileIndex < 0 || geoProfileIndex >= m_geoProfile2Ds.count()){
+        qDebug() << "Invalid geoProfileIndex called (" << geoProfileIndex << ")";
+        return false;
+    }
+
+    path.append(QDir::separator());
+    GeoProfile2D *geo = m_geoProfile2Ds.at(geoProfileIndex);
+    QString soilprofilescsv = path + "soilprofiles.csv";
+    QString segmentscsv = path + "segments.csv";
+    QString soilmaterialscsv = path + "soilmaterials.csv";
+    QString locationsegmentscsv = path + "locationsegments.csv";
+
+    if(geo==NULL){
+        qDebug() << "Could not find geometry with index=" << geoProfileIndex;
+        return false;
+    }
+
+    //LOCATIONSEGEMENTS.CSV
+    //write the segmenten to shapefile
+    QFile file(locationsegmentscsv);
+    if (!file.open(QFile::WriteOnly | QFile::Text)){
+        qDebug() << "Could not create file=" << locationsegmentscsv;
+        return false;
+    }
+    QTextStream out(&file);
+    out << "van,tot,segment_id\n";
+    //write the segment information
+    for(int i=0; i<geo->areas()->count();i++){
+        out << QString("%1,%2,%3\n").arg(geo->areas()->at(i).start)
+               .arg(geo->areas()->at(i).end)
+               .arg(geo->areas()->at(i).vsoilId);
+
+    }
+    file.close();
+
+    //SOILPROFILES.CSV
+    //now write the vsoils
+    QFile fileVSoils(soilprofilescsv);
+    if (!fileVSoils.open(QFile::WriteOnly | QFile::Text)){
+        qDebug() << "Could not create file=" << soilprofilescsv;
+        return false;
+    }
+    QTextStream outVSoils(&fileVSoils);
+    outVSoils << "soilprofile_id,top_level,soil_name\n";
+    //get all unique vsoil ids (and thus avoid double entries)
+    QList<int> uniqueVSoilIds;
+    geo->getUniqueVSoilsIDs(uniqueVSoilIds);
+    qSort(uniqueVSoilIds);
+    for(int i=0; i<uniqueVSoilIds.count(); i++){
+        int id = uniqueVSoilIds.at(i);
+        VSoil *vs = getVSoilById(id);
+        if(vs == NULL){
+            qDebug() << "Could not find vsoil with id=" << id;
+            return false;
+        }
+
+        QString soilProfileId = QString("profiel_%1").arg(vs->id());
+        for(int j=0; j<vs->getSoilLayers()->count(); j++){
+            if(vs->getSoilLayers()->count()<1){
+                qDebug() << "VSoil found with no soil layers (id=" << id << ")";
+                return false;
+            }
+            QString topLevel = QString("%1").arg(vs->getSoilLayers()->at(j).zmax, 0, 'f', 2);
+            QString soilName = getSoilTypeById(vs->getSoilLayers()->at(j).soiltype_id)->name();
+            outVSoils << QString("%1,%2,%3\n").arg(soilProfileId).arg(topLevel).arg(soilName);
+        }
+    }
+
+    fileVSoils.close();
+
+    //SEGMENTS.CSV
+    /* Bij het deterministisch ondergrondmodel geldt dat de vsoil_id uniek is
+      en overeen kan komen met het segment_id dat Deltares vraagt */
+    QFile fileSegments(segmentscsv);
+    if (!fileSegments.open(QFile::WriteOnly | QFile::Text)){
+        qDebug() << "Could not create file=" << segmentscsv;
+        return false;
+    }
+    QTextStream outSegments(&fileSegments);
+    outSegments << "segment_id,soilprofile_id,probability,calculation_type\n";
+    for(int i=0; i<uniqueVSoilIds.count(); i++){
+        VSoil *vs = getVSoilById(uniqueVSoilIds.at(i));
+        if(vs == NULL){
+            qDebug() << "Could not find vsoil with id=" << uniqueVSoilIds.at(i);
+            return false;
+        }
+        outSegments << QString("%1,profiel_%1,100,Stability\n").arg(vs->id());
+        outSegments << QString("%1,profiel_%1,100,Piping\n").arg(vs->id());
+    }
+
+    fileSegments.close();
+
+    //SOILMATERIALS.CSV
+    exportGeoProfileSoiltypesToCSVFile(soilmaterialscsv, geoProfileIndex);
+
+    return true;
+}
 
 bool DataStore::exportGeoProfileToKMLfile(const QString fileName, const int geoProfileIndex)
 {
@@ -1010,6 +1179,11 @@ bool DataStore::addNewVSoil(QPointF pointLatLon, QString source)
     vs->setY(l.asRDCoords().y());
     m_vsoils.append(vs);
     return true;
+}
+
+void DataStore::getVSoilSources(QStringList &sources)
+{
+    m_db->getVSoilSources(sources);
 }
 
 void DataStore::saveChanges()
