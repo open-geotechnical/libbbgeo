@@ -54,6 +54,7 @@ public:
     int getNextVSoilId();
     bool addNewVSoil(QPointF pointLatLon, QString source);
     void getVSoilSources(QStringList &sources);
+    void getVSoilLocations(QStringList &locations);
 
 
 public slots:

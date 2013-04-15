@@ -16,6 +16,7 @@ public:
     int columnCount(const QModelIndex &parent) const;
     QVariant data(const QModelIndex &index, int role) const; //name, date, x, y, zmax, zmin
     QVariant headerData(int section, Qt::Orientation orientation, int role) const;
+    bool setData(const QModelIndex &index, const QVariant &value, int role);
 
 private:
     QList<SoilType*> m_soilTypes;

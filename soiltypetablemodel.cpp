@@ -120,3 +120,8 @@ QVariant SoilTypeTableModel::headerData(int section, Qt::Orientation orientation
     }
     return QVariant();
 }
+
+bool SoilTypeTableModel::setData(const QModelIndex &index, const QVariant &value, int role)
+{
+    //TODO: uitwerken
+}

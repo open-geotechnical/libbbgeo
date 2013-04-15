@@ -22,6 +22,8 @@ VSoil::VSoil(QObject *parent) :
     m_soilLayers = new QList<VSoilLayer>();
     m_dataChanged = FALSE;
     m_name = "";
+    m_leveeLocation = 0;
+    m_enabled = true;
 }
 
 VSoil::~VSoil()
@@ -60,7 +62,7 @@ QByteArray VSoil::dataAsQByteArray(){
         result.append(QString("%1;%2;%3\n")
                       .arg(m_soilLayers->at(i).zmax, 2, 'f')
                       .arg(m_soilLayers->at(i).zmin, 2, 'f')
-                      .arg(m_soilLayers->at(i).soiltype_id, 'd'));
+                      .arg(m_soilLayers->at(i).soiltype_id));
     }
     return result;
 }

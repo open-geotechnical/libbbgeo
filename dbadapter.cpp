@@ -2,7 +2,8 @@
 
 #include <QDebug>
 #include <QSqlQuery>
-
+#include <QFile>
+#include <QDir>
 
 DBAdapter::DBAdapter(QObject *parent) :
     QObject(parent)
@@ -123,7 +124,8 @@ void DBAdapter::getAllVSoils(QList<VSoil *> &vsoils)
         vs->setLongitude(qry.value(4).toDouble());
         vs->setSource(qry.value(5).toString());
         vs->blobToData(qry.value(6).toString());
-        vs->setName(qry.value(7).toString());
+        vs->setName(qry.value(7).toString().trimmed());
+        vs->setLeveeLocation(qry.value(8).toInt());
         vsoils.append(vs);
     }
     //qDebug() << "Aantal vsoil: " << vsoils.count();
@@ -195,7 +197,7 @@ void DBAdapter::addVSoil(VSoil &vsoil, QSqlError &err)
         vsoil.setId(getMaxIDFromVSoil() + 1);
         QByteArray blob = vsoil.dataAsQByteArray();
         QSqlQuery qry;
-        qry.prepare("INSERT INTO vsoil VALUES(?, ?, ?, ?, ?, ?, ?, ?)");
+        qry.prepare("INSERT INTO vsoil VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)");
         qry.bindValue(0, vsoil.id());
         qry.bindValue(1, vsoil.x());
         qry.bindValue(2, vsoil.y());
@@ -204,6 +206,7 @@ void DBAdapter::addVSoil(VSoil &vsoil, QSqlError &err)
         qry.bindValue(5, vsoil.source());
         qry.bindValue(6, blob.data());
         qry.bindValue(7, vsoil.name());
+        qry.bindValue(8, vsoil.levee_location());
         qry.exec();
         err = qry.lastError();
     }else{
@@ -215,7 +218,7 @@ void DBAdapter::updateVSoil(VSoil *vsoil, QSqlError &err){
     QByteArray blob = vsoil->dataAsQByteArray();
     QSqlQuery qry;
 
-    qry.prepare("UPDATE vsoil SET x=:x, y=:y, latitude=:lat, longitude=:lon, source=:src, data=:data, name=:name WHERE id=:id");
+    qry.prepare("UPDATE vsoil SET x=:x, y=:y, latitude=:lat, longitude=:lon, source=:src, data=:data, name=:name, levee_location=:levee_location WHERE id=:id");
 
     qry.bindValue(":x", vsoil->x());
     qry.bindValue(":y", vsoil->y());
@@ -225,6 +228,7 @@ void DBAdapter::updateVSoil(VSoil *vsoil, QSqlError &err){
     qry.bindValue(":data", blob.data());
     qry.bindValue(":id", vsoil->id());
     qry.bindValue(":name", vsoil->name());
+    qry.bindValue(":levee_location", vsoil->levee_location());
     qry.exec();
     vsoil->setDataChanged(FALSE);
     err = qry.lastError();
@@ -233,6 +237,32 @@ void DBAdapter::updateVSoil(VSoil *vsoil, QSqlError &err){
 bool DBAdapter::isOpen()
 {
     return m_db.isOpen();
+}
+
+bool DBAdapter::createNew(QString filename)
+{
+    qDebug() << "TODO: Implement bool DBAdapter::createNew(QString filename)";
+    /*
+    QString sqlFileName = QDir::currentPath().append('defaultdb.sql');
+    if (QFile::exists(sqlFileName)){
+        //QString sql = QFile(sqlFileName).readLine();
+        QString sql;
+
+         QFile fIn(sqlFileName);
+         if(fIn.open(QIODevice::ReadOnly | QIODevice::Text)){
+             QTextStream in(&fIn);
+             while (!in.atEnd())
+                 sql.append(in.readLine());
+         }
+
+        QSqlQuery qry;
+        qry.exec(                  )
+        return true;
+    }else{
+        qDebug() << QString("Error: could not find %1").arg(fileName);
+        return false;
+    }*/
+    return true;
 }
 
 bool DBAdapter::openDB(QString filename)

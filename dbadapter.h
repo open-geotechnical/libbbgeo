@@ -20,6 +20,7 @@ public:
     bool openDB(QString filename);
     void closeDB();
     bool isOpen();
+    bool createNew(QString filename);
 
     void getAllCPTs(QList<sCPTMetaData> &cptsMetaData);
     void getAllSoilTypes(QList<SoilType *> &soilTypes);
@@ -31,7 +32,7 @@ public:
 
     bool isUniqueCPT(QPointF point);
     bool isUniqueVSoil(QPointF point);
-    void getVSoilSources(QStringList &sources);
+    void getVSoilSources(QStringList &sources);    
 
 private:
     QSqlDatabase m_db;

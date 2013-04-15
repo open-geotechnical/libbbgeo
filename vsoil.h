@@ -27,6 +27,8 @@ public:
     double latitude() { return m_lat; }
     double longitude() { return m_lng; }
     QString name() { return m_name; }
+    int levee_location() { return m_leveeLocation; }
+    bool isEnabled() { return m_enabled; }
 
     void optimize();
 
@@ -41,10 +43,12 @@ public:
     void setY(double y) { m_y = y; }
     void setLatitude(double lat) { m_lat = lat; }
     void setLongitude(double lng) { m_lng = lng; }
+    void setLeveeLocation(int location) { m_leveeLocation = location; }
 
     void addSoilLayer(double zmax, double zmin, int id);
     bool dataChanged() { return m_dataChanged; }
     void setDataChanged(bool dataHasChanged) { m_dataChanged = dataHasChanged; }
+    void setEnabled(bool value) { m_enabled = value; }
 
 private:
     int m_id;
@@ -55,8 +59,9 @@ private:
     QString m_source;
     QList<VSoilLayer> *m_soilLayers;
     QString m_name;
-
+    int m_leveeLocation;  //0 = undefined, 1 = crest, 2 = polder
     bool m_dataChanged;
+    bool m_enabled;
 
     
 signals:

@@ -265,25 +265,25 @@ bool CPT::readFromFile(const QString filename, QStringList &log)
  */
 int getSoiltypeByWgAndCUR162(double wg){
     if (wg <= 0.6)
-        return 45;
+        return 10000;
     else if ((wg > 0.6) && (wg <= 0.8))
-        return 43;
+        return 10001;
     else if ((wg > 0.8) && (wg <= 1.1))
-        return 43;
+        return 10002;
     else if ((wg > 1.1) && (wg <= 1.4))
-        return 42;
+        return 10003;
     else if ((wg > 1.4) && (wg <= 1.8))
-        return 41;
+        return 10004;
     else if ((wg > 1.8) && (wg <= 2.2))
-        return 40;
+        return 10005;
     else if ((wg > 2.2) && (wg <= 2.5))
-        return 39;
+        return 10006;
     else if ((wg > 2.5) && (wg <= 5.0))
-        return 38;
+        return 10007;
     else if ((wg > 5.0) && (wg <= 8.1))
-        return 37;
+        return 10008;
     else
-        return 36;
+        return 10009;
 }
 
 /*

@@ -98,17 +98,20 @@ QList<sCPTMetaData> DataStore::getVisibleCPTs(QRectF boundary)
 }
 
 //return the vsoil.id with the coordinates closest to the given point xy
+//filter by enabled ones
 int DataStore::getVSoilIdClosestTo(QPointF xy)
 {
     double dlmin = 1.e9;
     int idx = -1;
     for(int i=0; i<m_vsoils.count(); i++){
-        double dx = xy.x() - m_vsoils[i]->x();
-        double dy = xy.y() - m_vsoils[i]->y();
-        double dl = dx * dx + dy * dy;
-        if(dl < dlmin){
-            idx = m_vsoils[i]->id();
-            dlmin = dl;
+        if(m_vsoils[i]->isEnabled()){
+            double dx = xy.x() - m_vsoils[i]->x();
+            double dy = xy.y() - m_vsoils[i]->y();
+            double dl = dx * dx + dy * dy;
+            if(dl < dlmin){
+                idx = m_vsoils[i]->id();
+                dlmin = dl;
+            }
         }
     }
     return idx;
@@ -1184,6 +1187,15 @@ bool DataStore::addNewVSoil(QPointF pointLatLon, QString source)
 void DataStore::getVSoilSources(QStringList &sources)
 {
     m_db->getVSoilSources(sources);
+}
+
+void DataStore::getVSoilLocations(QStringList &locations)
+{
+    locations.clear();
+    locations.append("All");
+    locations.append("Crest");
+    locations.append("Polder");
+    locations.append("Undefined");
 }
 
 void DataStore::saveChanges()
