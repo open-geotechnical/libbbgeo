@@ -22,14 +22,18 @@ CPT::CPT(QObject *parent) :
     m_metaData.zmin = 0.;
     m_metaData.fileName = "";
     m_metaData.date = QDateTime(QDate(1900,1,1));
+    m_z = new QList<double>;
+    m_qc = new QList<double>;
+    m_pw = new QList<double>;
+    m_wg = new QList<double>;
 }
 
 CPT::~CPT()
 {
-    m_z.clear();
-    m_qc.clear();
-    m_pw.clear();
-    m_wg.clear();
+    m_z->clear();
+    m_qc->clear();
+    m_pw->clear();
+    m_wg->clear();
 }
 
 /*
@@ -43,12 +47,12 @@ CPT::~CPT()
 QByteArray CPT::dataAsQByteArray()
 {
     QByteArray result;
-    for(int i=0; i<m_z.count();i++){
+    for(int i=0; i<m_z->count();i++){
         result.append(QString("%1;%2;%3;%4\n")\
-                      .arg(m_z[i], 2, 'f')\
-                      .arg(m_qc[i], 3, 'f')\
-                      .arg(m_pw[i], 3, 'f')\
-                      .arg(m_wg[i], 3, 'f'));
+                      .arg(m_z->at(i), 2, 'f')\
+                      .arg(m_qc->at(i), 3, 'f')\
+                      .arg(m_pw->at(i), 3, 'f')\
+                      .arg(m_wg->at(i), 3, 'f'));
     }
     return result;
 }
@@ -57,27 +61,27 @@ QByteArray CPT::dataAsQByteArray()
     Returns the values at the given depth. Returns NULL if z is out of range
 */
 double CPT::getQcAt(double z){
-    for(int i=0; i<m_qc.count(); i++)
-        if (m_z[i] < z)
-            return m_qc[i];
+    for(int i=0; i<m_qc->count(); i++)
+        if (m_z->at(i) < z)
+            return m_qc->at(i);
     //TODO: raise exception
     return 0.;
 }
 
 double CPT::getWgAt(double z)
 {
-    for(int i=0; i<m_wg.count(); i++)
-        if (m_z[i] < z)
-            return m_wg[i];
+    for(int i=0; i<m_wg->count(); i++)
+        if (m_z->at(i) < z)
+            return m_wg->at(i);
     //TODO: raise exception
     return 0.;
 }
 
 double CPT::getPwAt(double z)
 {
-    for(int i=0; i<m_pw.count(); i++)
-        if (m_z[i] < z)
-            return m_pw[i];
+    for(int i=0; i<m_pw->count(); i++)
+        if (m_z->at(i) < z)
+            return m_pw->at(i);
     //TODO: raise exception
     return 0.;
 }
@@ -246,15 +250,15 @@ bool CPT::readFromFile(const QString filename, QStringList &log)
                     }else{
                         wg = args.at(colid[3]).toDouble();
                     }
-                    m_z.append(m_metaData.zmax - std::abs(dz));
-                    m_qc.append(qc);
-                    m_pw.append(pw);
-                    m_wg.append(wg);
+                    m_z->append(m_metaData.zmax - std::abs(dz));
+                    m_qc->append(qc);
+                    m_pw->append(pw);
+                    m_wg->append(wg);
                 }
             }
         }
     }
-    m_metaData.zmin = m_z[m_z.count()-1];
+    m_metaData.zmin = m_z->at(m_z->count()-1);
     file.close(); //TODO: in try except manier?
     return true;
 }
@@ -301,13 +305,13 @@ void CPT::generateVSoil(VSoil &vsoil, double minInterval)
     double ztop = zmax();
     int n = 0;
     double sum_wg = 0.;
-    for(int i=0; i<m_z.count(); i++){
-        double z = m_z[i];
-        double wg = m_wg[i];
+    for(int i=0; i<m_z->count(); i++){
+        double z = m_z->at(i);
+        double wg = m_wg->at(i);
         sum_wg += wg;
         n += 1;
 
-        if(i==m_z.count()-1){
+        if(i==m_z->count()-1){
             vsoil.addSoilLayer(ztop, z, getSoiltypeByWgAndCUR162(sum_wg / n));
         }else if((ztop - z) > minInterval){
             if(n==0){

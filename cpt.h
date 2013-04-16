@@ -61,14 +61,18 @@ public:
 
     void generateVSoil(VSoil &vsoil, double minInterval);
 
+    QList<double>* z() { return m_z; }
+    QList<double>* qc() { return m_qc; }
+    QList<double>* pw() { return m_pw; }
+    QList<double>* wg() { return m_wg; }
 
 private:
     sCPTMetaData m_metaData;
 
-    QList<double> m_z;  //all z points
-    QList<double> m_qc; //all qc points
-    QList<double> m_pw; //all pw points
-    QList<double> m_wg; //all wg points
+    QList<double> *m_z;  //all z points
+    QList<double> *m_qc; //all qc points
+    QList<double> *m_pw; //all pw points
+    QList<double> *m_wg; //all wg points
 
 signals:
     
