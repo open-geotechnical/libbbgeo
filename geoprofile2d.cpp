@@ -53,6 +53,33 @@ void GeoProfile2D::getUniqueVSoilsIDs(QList<int> &vsoilIds)
 
 void GeoProfile2D::optimize()
 {
+    QList<sArea> optimizedList;
+    int start = 0;
+    int cid = -1;
+    for(int i=0; i<m_areas->count();i++){
+        if(i==0){
+            start = m_areas->at(i).start;
+            cid = m_areas->at(i).vsoilId;
+        }
+        if(cid != m_areas->at(i).vsoilId || i==m_areas->count()-1){
+            sArea a;
+            a.start = start;
+            if(i==m_areas->count()-1)
+                a.end = m_areas->at(i).end;
+            else
+                a.end = m_areas->at(i).start;
+            a.vsoilId = cid;
+            optimizedList.append(a);
+            cid = m_areas->at(i).vsoilId;
+            start = a.end;
+        }
+    }
+    m_areas->clear();
+    foreach(sArea a , optimizedList){
+       m_areas->append(a);
+    }
+
+    /*
     QList<sArea> optimizedAreas;
     int cId = -1;
     int startX = 0;
@@ -60,25 +87,25 @@ void GeoProfile2D::optimize()
     for(int i=0; i<m_areas->count(); i++){
         if(cId == -1){ //first entry
             cId = m_areas->at(i).vsoilId;
-        }else{ //if the id changed or it is the last entry, add this area to the optimized list
-            if((cId != m_areas->at(i).vsoilId) || (i==m_areas->count()-1)){
-                sArea a;
-                a.vsoilId = cId;
-                a.start = startX;
-                if(i == m_areas->count()-1){ //if at end use the end of the area
-                    a.end = m_areas->at(i).end;
-                }
-                else{ //if not use the start of the area
-                    a.end = m_areas->at(i).start;
-                }
-                optimizedAreas.append(a);
-                startX = m_areas->at(i).start;
-                cId = m_areas->at(i).vsoilId;
+        }
+        //if the id changed or it is the last entry, add this area to the optimized list
+        if((cId != m_areas->at(i).vsoilId) || (i==m_areas->count()-1)){
+            sArea a;
+            a.vsoilId = cId;
+            a.start = startX;
+            if(i == m_areas->count()-1){ //if at end use the end of the area
+                a.end = m_areas->at(i).end;
             }
+            else{ //if not use the start of the area
+                a.end = m_areas->at(i).start;
+            }
+            optimizedAreas.append(a);
+            startX = m_areas->at(i).start;
+            cId = m_areas->at(i).vsoilId;
         }
     }
     m_areas->clear();
     foreach(sArea a , optimizedAreas){
        m_areas->append(a);
-    }
+    }*/
 }
