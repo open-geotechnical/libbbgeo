@@ -11,6 +11,7 @@ SOURCES +=  cpt.cpp\
             soiltype.cpp\
             soiltypetablemodel.cpp\
             vsoil.cpp
+
 HEADERS +=  cpt.h\
             cpttablemodel.h\
             datastore.h\

@@ -230,7 +230,46 @@ void DBAdapter::updateVSoil(VSoil *vsoil, QSqlError &err){
     qry.bindValue(":name", vsoil->name());
     qry.bindValue(":levee_location", vsoil->levee_location());
     qry.exec();
-    vsoil->setDataChanged(FALSE);
+    vsoil->setDataChanged(false);
+    err = qry.lastError();
+}
+
+void DBAdapter::updateSoilType(SoilType *st, QSqlError &err)
+{
+    QSqlQuery qry;
+    qry.prepare("UPDATE soiltypes SET name=:name, description=:description, source=:source, " \
+                "ydry=:ydry, ysat=:ysat, c=:c, phi=:phi, upsilon=:upsilon, k=:k, " \
+                "MC_upsilon=:MC_upsilon, MC_E50=:MC_E50, HS_E50=:HS_E50, HS_Eoed=:HS_Eoed, "\
+                "HS_Eur=:HS_Eur, HS_m=:HS_m, SSC_lambda=:SSC_lambda, SSC_kappa=:SSC_kappa, SSC_mu=:SSC_mu, "\
+                "Cp=:Cp, Cs=:Cs, Cap=:Cap, Cas=:Cas, cv=:cv, color=:color WHERE id=:id");
+
+    qry.bindValue(":id", st->id());
+    qry.bindValue(":name", st->name());
+    qry.bindValue(":description", st->description());
+    qry.bindValue(":source", st->source());
+    qry.bindValue(":ydry",st->yDry());
+    qry.bindValue(":ysat",st->ySat());
+    qry.bindValue(":c",st->c());
+    qry.bindValue(":phi",st->phi());
+    qry.bindValue(":upsilon",st->upsilon());
+    qry.bindValue(":k",st->k());
+    qry.bindValue(":MC_upsilon", st->mcUpsilon());
+    qry.bindValue(":MC_E50", st->mcE50());
+    qry.bindValue(":HS_E50",st->hsE50());
+    qry.bindValue(":HS_Eoed", st->hsEoed());
+    qry.bindValue(":HS_Eur",st->hsEur());
+    qry.bindValue(":HS_m", st->hsM());
+    qry.bindValue(":SSC_lambda",st->sscLambda());
+    qry.bindValue(":SSC_kappa",st->sscKappa());
+    qry.bindValue(":SSC_mu",st->sscMu());
+    qry.bindValue(":Cp",st->cp());
+    qry.bindValue(":Cs",st->cs());
+    qry.bindValue(":Cap", st->cap());
+    qry.bindValue(":Cas", st->cas());
+    qry.bindValue(":cv", st->cv());
+    qry.bindValue(":color", st->color());
+    qry.exec();
+    st->setDataChanged(false);
     err = qry.lastError();
 }
 
@@ -241,6 +280,7 @@ bool DBAdapter::isOpen()
 
 bool DBAdapter::createNew(QString filename)
 {
+    Q_UNUSED(filename);
     qDebug() << "TODO: Implement bool DBAdapter::createNew(QString filename)";
     /*
     QString sqlFileName = QDir::currentPath().append('defaultdb.sql');

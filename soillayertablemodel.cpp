@@ -1,5 +1,7 @@
 #include "soillayertablemodel.h"
 
+#include <QColor>
+
 SoilLayerTableModel::SoilLayerTableModel(QObject *parent) :
     QAbstractTableModel(parent)
 {
@@ -42,13 +44,13 @@ QVariant SoilLayerTableModel::data(const QModelIndex &index, int role) const
             if(index.column()==1){
                 VSoilLayer vs = m_soilLayers->at(index.row());
                 if(vs.zmax <= vs.zmin){
-                    return Qt::red;
+                    return QColor(Qt::red);
                 }
             }
             if(index.column()==0 && index.row()==0){
                 VSoilLayer vs = m_soilLayers->at(index.row());
                 if(vs.zmax <= vs.zmin){
-                    return Qt::red;
+                    return QColor(Qt::red);
                 }
             }
             //TODO: check validity soiltype id

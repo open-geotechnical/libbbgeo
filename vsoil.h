@@ -48,7 +48,7 @@ public:
     void addSoilLayer(double zmax, double zmin, int id);
     bool dataChanged() { return m_dataChanged; }
     void setDataChanged(bool dataHasChanged) { m_dataChanged = dataHasChanged; }
-    void setEnabled(bool value) { m_enabled = value; }
+    void setEnabled(bool value) { m_enabled = value; }    
 
 private:
     int m_id;

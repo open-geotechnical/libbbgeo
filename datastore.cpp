@@ -14,7 +14,7 @@ DataStore::DataStore(QObject *parent) :
 {
     //init a database
     m_db = new DBAdapter(NULL);
-    m_dataLoaded = FALSE;
+    m_dataLoaded = false;
 }
 
 DataStore::~DataStore()
@@ -70,7 +70,7 @@ void DataStore::loadData(QString fileName)
     m_db->getAllSoilTypes(m_soilTypes);
     progress.setValue(3);
     m_db->getAllVSoils(m_vsoils);
-    m_dataLoaded = TRUE;
+    m_dataLoaded = true;
 }
 
 QList<VSoil*> DataStore::getVisibleVSoils(QRectF boundary)
@@ -227,7 +227,7 @@ bool DataStore::importVSoilFromTextFile(QString fileName, QStringList &log)
             QSqlError err;
             m_db->addVSoil(vs, err);
             if(err.isValid()){
-                qDebug() << "DBERROR: %1" << err;
+                qDebug() << "DBERROR:" << err;
                 log.append(QString("SKIPPED file %1 because of database error %2").arg(fileName).arg(err.text()));
                 return false;
             }
@@ -302,6 +302,29 @@ void DataStore::generateGeoProfile2D(QList<QPointF> &latlonPoints)
     }
     geo->optimize();
     m_geoProfile2Ds.append(geo);
+}
+
+/*
+  scans the first <depth> meters and returns the id of the vsoil with the
+  smallest c and phi within the visible area
+*/
+void DataStore::findWeakestSpot(const QRectF boundary, const int depth)
+{
+    int id = -1;
+    double worstScore = 9999.0;
+    foreach(VSoil *vs, getVisibleVSoils(boundary)){
+        if(vs->isEnabled()){
+            double avgc = getAverageC(vs->id(), depth);
+            double avgphi = getAveragePhi(vs->id(), depth);
+            double score = avgc / 10.0 + avgphi / 35.0;
+            qDebug() << vs->id() << avgc << avgphi << score;
+            if (score < worstScore){
+                id = vs->id();
+                worstScore = score;
+            }
+        }
+    }
+    qDebug() << "UITSLAG: " << worstScore << " met id " << id;
 }
 
 bool DataStore::exportGeoProfileToQGeoFile(const QString fileName, const int geoProfileIndex)
@@ -1152,6 +1175,67 @@ SoilType *DataStore::getSoilTypeById(int id)
     return NULL; //TODO: Check boundaties and give meaningfull error if it's out of bounds
 }
 
+double DataStore::getAveragePhi(const int vsoilId, const int depth){
+    VSoil *vs = getVSoilById(vsoilId);
+    if(vs==NULL){
+        qDebug() << "Error in DataStore::getAveragePhi; no VSoil found with id = " << vsoilId;
+        return 0.0;
+    }
+    double sum = 0.0;
+    double maxDepth = vs->zMax() - depth;
+
+    for(int i=0; i<vs->getSoilLayers()->count(); i++){
+        SoilType *st = getSoilTypeById(vs->getSoilLayers()->at(i).soiltype_id);
+        if(st==NULL){
+            qDebug() << "Error in DataStore::getAveragePhi; no SoilType found with id = " << vs->getSoilLayers()->at(i).soiltype_id;
+            return 0.0;
+        }
+
+        if(vs->getSoilLayers()->at(i).zmin < maxDepth){
+            sum += (vs->getSoilLayers()->at(i).zmax - maxDepth) * st->phi();
+            break;
+        }
+        sum += (vs->getSoilLayers()->at(i).zmax - vs->getSoilLayers()->at(i).zmin) * st->phi();
+    }
+    if(vs->zMax() - vs->zMin() <= 0.00){
+        qDebug() << "Error in DataStore::getAveragePhi; vsoil of 0 length, vsoilId = " << vsoilId;
+        return 0.0;
+    }
+
+    return sum / double(depth);
+}
+
+double DataStore::getAverageC(const int vsoilId, const int depth)
+{
+    VSoil *vs = getVSoilById(vsoilId);
+    if(vs==NULL){
+        qDebug() << "Error in DataStore::getAverageC; no VSoil found with id = " << vsoilId;
+        return 0.0;
+    }
+    double sum = 0.0;
+    double maxDepth = vs->zMax() - depth;
+
+    for(int i=0; i<vs->getSoilLayers()->count(); i++){
+        SoilType *st = getSoilTypeById(vs->getSoilLayers()->at(i).soiltype_id);
+        if(st==NULL){
+            qDebug() << "Error in DataStore::getAverageC; no SoilType found with id = " << vs->getSoilLayers()->at(i).soiltype_id;
+            return 0.0;
+        }
+
+        if(vs->getSoilLayers()->at(i).zmin < maxDepth){
+            sum += (vs->getSoilLayers()->at(i).zmax - maxDepth) * st->c();
+            break;
+        }
+        sum += (vs->getSoilLayers()->at(i).zmax - vs->getSoilLayers()->at(i).zmin) * st->c();
+    }
+    if(vs->zMax() - vs->zMin() <= 0.00){
+        qDebug() << "Error in DataStore::getAverageC; vsoil of 0 length, vsoilId = " << vsoilId;
+        return 0.0;
+    }
+
+    return sum / double(depth);
+}
+
 //returns the next possible vsoilid
 int DataStore::getNextVSoilId()
 {
@@ -1206,8 +1290,35 @@ void DataStore::saveChanges()
         if(m_vsoils[i]->dataChanged()){
             m_db->updateVSoil(m_vsoils[i], err);
             if(err.isValid()){
-                qDebug() << "DBERROR: %1" << err;
+                qDebug() << "DBERROR:" << err;
             }
         }
+    }
+}
+
+void DataStore::saveSoilTypes()
+{
+    QSqlError err;
+    for(int i=0; i<m_soilTypes.count(); i++){
+        if(m_soilTypes[i]->dataChanged()){
+            m_db->updateSoilType(m_soilTypes[i], err);
+            if(err.isValid()){
+                qDebug() << "DBERROR:" << err;
+            }
+        }
+    }
+}
+
+void DataStore::reloadSoilTypes()
+{
+    m_soilTypes.clear();
+    m_db->getAllSoilTypes(m_soilTypes);
+}
+
+void DataStore::setFilter(int code)
+{
+    //set filter
+    for(int i=0; i<m_vsoils.count(); i++){
+        m_vsoils[i]->setEnabled(m_vsoils[i]->levee_location()==code);
     }
 }

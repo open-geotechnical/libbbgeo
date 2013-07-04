@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += network sql gui
+QT       += network sql gui widgets
 
 TARGET = libbbgeo
 TEMPLATE = lib

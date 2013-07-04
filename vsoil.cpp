@@ -20,7 +20,7 @@ VSoil::VSoil(QObject *parent) :
     m_lat = 0.;
     m_lng = 0.;
     m_soilLayers = new QList<VSoilLayer>();
-    m_dataChanged = FALSE;
+    m_dataChanged = false;
     m_name = "";
     m_leveeLocation = 0;
     m_enabled = true;

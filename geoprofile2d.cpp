@@ -78,34 +78,4 @@ void GeoProfile2D::optimize()
     foreach(sArea a , optimizedList){
        m_areas->append(a);
     }
-
-    /*
-    QList<sArea> optimizedAreas;
-    int cId = -1;
-    int startX = 0;
-
-    for(int i=0; i<m_areas->count(); i++){
-        if(cId == -1){ //first entry
-            cId = m_areas->at(i).vsoilId;
-        }
-        //if the id changed or it is the last entry, add this area to the optimized list
-        if((cId != m_areas->at(i).vsoilId) || (i==m_areas->count()-1)){
-            sArea a;
-            a.vsoilId = cId;
-            a.start = startX;
-            if(i == m_areas->count()-1){ //if at end use the end of the area
-                a.end = m_areas->at(i).end;
-            }
-            else{ //if not use the start of the area
-                a.end = m_areas->at(i).start;
-            }
-            optimizedAreas.append(a);
-            startX = m_areas->at(i).start;
-            cId = m_areas->at(i).vsoilId;
-        }
-    }
-    m_areas->clear();
-    foreach(sArea a , optimizedAreas){
-       m_areas->append(a);
-    }*/
 }

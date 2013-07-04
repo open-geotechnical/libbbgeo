@@ -36,6 +36,7 @@ public:
     double cas() {return m_Cas;}
     double cv() {return m_cv;}
     QString color() {return m_color;}
+    bool dataChanged() { return m_dataChanged; }
 
     //setters
     void setId(int i) { m_id = i;}
@@ -63,6 +64,7 @@ public:
     void setCas(double d) {m_Cas = d;}
     void setCv(double d) {m_cv = d;}
     void setColor(QString s) {m_color = s;}
+    void setDataChanged(bool dataHasChanged) { m_dataChanged = dataHasChanged; }
 
 private:
     int m_id;             //id of the soiltype
@@ -90,6 +92,9 @@ private:
     double m_Cas;       //Compression index C's [-]
     double m_cv;        //Cv value [m2/s]
     QString m_color;    //Color in HTML code, ie. #RRGGBB
+    bool m_dataChanged; //shows whether the data has changed
+
+
     
 signals:
     

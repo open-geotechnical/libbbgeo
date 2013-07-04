@@ -29,6 +29,8 @@ public:
     bool importVSoilFromTextFile(QString fileName, QStringList &log);
 
     void generateGeoProfile2D(QList<QPointF> &latlonPoints);
+    void setFilter(int code);
+    void findWeakestSpot(const QRectF boundary, const int depth);
 
     QList<sCPTMetaData> getCPTMetaDatas() { return m_cptsMetaData; }
     QList<GeoProfile2D*> getProfiles() { return m_geoProfile2Ds; }
@@ -39,6 +41,8 @@ public:
     SoilType* getSoilTypeById(int id);
     QString fileName() { return m_fileName; }
 
+    double getAverageC(const int vsoilId, const int depth);
+    double getAveragePhi(const int vsoilId, const int depth);
 
     /*
      * EXPORT OPTIONS
@@ -56,9 +60,10 @@ public:
     void getVSoilSources(QStringList &sources);
     void getVSoilLocations(QStringList &locations);
 
-
 public slots:
     void saveChanges();
+    void saveSoilTypes();
+    void reloadSoilTypes();
 
 private:
     DBAdapter *m_db;    
@@ -76,8 +81,6 @@ private:
 signals:
     void importingNextCPT(int currentCPTNumber);
     void sendTotalCPT(int numCPTs);
-
-
 };
 
 #endif // DATASTORE_H

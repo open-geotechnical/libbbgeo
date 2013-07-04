@@ -29,6 +29,7 @@ public:
     void addCPT(CPT *cpt, const int vsoilId, QSqlError &err);
     void addVSoil(VSoil &vsoil, QSqlError &err);
     void updateVSoil(VSoil *vsoil, QSqlError &err);
+    void updateSoilType(SoilType *st, QSqlError &err);
 
     bool isUniqueCPT(QPointF point);
     bool isUniqueVSoil(QPointF point);
